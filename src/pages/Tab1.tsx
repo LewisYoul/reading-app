@@ -1,22 +1,14 @@
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
-import ExploreContainer from '../components/ExploreContainer';
+import { IonContent, IonPage } from '@ionic/react';
 import './Tab1.css';
+import WelcomeHeader from '../components/WelcomeHeader';
+import WeatherSummary from '../components/WeatherSummary';
 
 const Tab1: React.FC = () => {
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Tab 1</IonTitle>
-        </IonToolbar>
-      </IonHeader>
       <IonContent fullscreen>
-        <IonHeader collapse="condense">
-          <IonToolbar>
-            <IonTitle size="large">Tab 1</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <ExploreContainer name="Tab 1 page" />
+        <WelcomeHeader />
+        <WeatherSummary />
       </IonContent>
     </IonPage>
   );
