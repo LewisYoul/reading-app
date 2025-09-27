@@ -156,22 +156,18 @@
 }
 
 .collection-item.collection-success {
-  --background: var(--ion-color-success-tint);
   border-left: 4px solid var(--ion-color-success);
 }
 
 .collection-item.collection-primary {
-  --background: var(--ion-color-primary-tint);
   border-left: 4px solid var(--ion-color-primary);
 }
 
 .collection-item.collection-secondary {
-  --background: var(--ion-color-secondary-tint);
   border-left: 4px solid var(--ion-color-secondary);
 }
 
 .collection-item.collection-medium {
-  --background: var(--ion-color-light);
   border-left: 4px solid var(--ion-color-medium);
 }
 

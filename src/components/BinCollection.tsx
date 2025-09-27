@@ -235,6 +235,7 @@ const BinCollection: React.FC<BinCollectionProps> = ({ isOpen, onClose }) => {
 
   const getServiceIcon = (service: string): string => {
     const serviceLower = service.toLowerCase();
+    if (serviceLower.includes('food')) return '🍎';
     if (serviceLower.includes('recycling')) return '♻️';
     if (serviceLower.includes('garden') || serviceLower.includes('green')) return '🌿';
     if (serviceLower.includes('domestic') || serviceLower.includes('general')) return '🗑️';
@@ -367,7 +368,7 @@ const BinCollection: React.FC<BinCollectionProps> = ({ isOpen, onClose }) => {
                   <h3>Upcoming Collections:</h3>
                   <IonList>
                     {collections.map((collection, index) => {
-                      const { date, dayOfWeek } = formatCollectionDate(collection);
+                      const { date } = formatCollectionDate(collection);
                       const icon = getServiceIcon(collection.service);
                       const color = getServiceColor(collection.service);
                       
@@ -377,8 +378,7 @@ const BinCollection: React.FC<BinCollectionProps> = ({ isOpen, onClose }) => {
                             {icon}
                           </div>
                           <IonLabel>
-                            <h2>{collection.service}</h2>
-                            <h3>{dayOfWeek}</h3>
+                            <h2>{collection.service.replace(/ Collection Service$/i, '')}</h2>
                             <p>{date}</p>
                           </IonLabel>
                         </IonItem>
