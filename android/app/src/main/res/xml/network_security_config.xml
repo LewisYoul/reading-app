@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Allow cleartext traffic for specific domains -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">116.203.83.250</domain>
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+    </domain-config>
+    
+    <!-- For development purposes, you can also allow all cleartext traffic
+         Remove this in production and only allow specific domains above -->
+    <!-- 
+    <base-config cleartextTrafficPermitted="true" />
+    -->
+</network-security-config>

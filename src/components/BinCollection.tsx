@@ -16,6 +16,7 @@ import {
   IonToast
 } from '@ionic/react';
 import { Preferences } from '@capacitor/preferences';
+import { CapacitorHttp } from '@capacitor/core';
 import { close } from 'ionicons/icons';
 import './BinCollection.css';
 
@@ -123,17 +124,19 @@ const BinCollection: React.FC<BinCollectionProps> = ({ isOpen, onClose }) => {
       // Save postcode to preferences when searching
       await savePostcode(formattedPostcode);
       
-      const response = await fetch(`http://116.203.83.250/api/reading/rbc/getaddresses/${formattedPostcode}`);
+      const response = await CapacitorHttp.get({
+        url: `http://116.203.83.250/api/reading/rbc/getaddresses/${formattedPostcode}`
+      });
       console.log('Response status:', response.status);
       
-      if (!response.ok) {
+      if (response.status !== 200) {
         if (response.status === 404) {
           throw new Error('No addresses found for this postcode');
         }
-        throw new Error(`Failed to fetch addresses: ${response.status} ${response.statusText}`);
+        throw new Error(`Failed to fetch addresses: ${response.status}`);
       }
 
-      const data = await response.json();
+      const data = response.data;
       console.log('API response:', data);
       
       // The API response has an "Addresses" array
@@ -192,30 +195,21 @@ const BinCollection: React.FC<BinCollectionProps> = ({ isOpen, onClose }) => {
       console.log('Fetching collections for UPRN:', uprn);
       
       // Use NestJS API proxy server
-      const response = await fetch(`http://116.203.83.250/api/reading/api/collections/${uprn}`);
+      const response = await CapacitorHttp.get({
+        url: `http://116.203.83.250/api/reading/api/collections/${uprn}`
+      });
       console.log('Collections response status:', response.status);
       console.log('Collections response headers:', response.headers);
       
-      if (!response.ok) {
+      if (response.status !== 200) {
         if (response.status === 404) {
           throw new Error('No collection data found for this address');
         }
-        throw new Error(`Failed to fetch collections: ${response.status} ${response.statusText}`);
+        throw new Error(`Failed to fetch collections: ${response.status}`);
       }
 
-      const responseText = await response.text();
-      console.log('Raw response text:', responseText.substring(0, 500));
-      
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('Failed to parse JSON:', parseError);
-        if (responseText.includes('<!doctype html>')) {
-          throw new Error('Dev server proxy not working. Please restart the dev server (npm run dev) after vite.config.ts changes.');
-        }
-        throw new Error('Invalid response format from server');
-      }
+      const data = response.data;
+      console.log('Raw response data:', JSON.stringify(data).substring(0, 500));
       
       console.log('Collections API response:', data);
       
