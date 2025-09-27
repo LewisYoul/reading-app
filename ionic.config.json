@@ -1,0 +1,8 @@
+{
+  "name": "reading-app",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite",
+  "id": "db71fcb8"
+}
