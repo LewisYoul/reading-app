@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   IonModal, 
   IonHeader, 
@@ -15,7 +15,8 @@ import {
   IonSpinner,
   IonToast
 } from '@ionic/react';
-import { close, search } from 'ionicons/icons';
+import { Preferences } from '@capacitor/preferences';
+import { close } from 'ionicons/icons';
 import './BinCollection.css';
 
 interface Address {
@@ -56,6 +57,37 @@ const BinCollection: React.FC<BinCollectionProps> = ({ isOpen, onClose }) => {
   const [error, setError] = useState<string>('');
   const [showToast, setShowToast] = useState<boolean>(false);
 
+  // Preferences keys
+  const POSTCODE_KEY = 'bin_collection_postcode';
+  const SELECTED_ADDRESS_KEY = 'bin_collection_selected_address';
+
+  // Save postcode to preferences
+  const savePostcode = async (postcodeValue: string) => {
+    try {
+      await Preferences.set({
+        key: POSTCODE_KEY,
+        value: postcodeValue
+      });
+      console.log('Postcode saved to preferences:', postcodeValue);
+    } catch (error) {
+      console.error('Error saving postcode to preferences:', error);
+    }
+  };
+
+  // Save selected address to preferences
+  const saveSelectedAddress = async (address: Address) => {
+    try {
+      await Preferences.set({
+        key: SELECTED_ADDRESS_KEY,
+        value: JSON.stringify(address)
+      });
+      console.log('Selected address saved to preferences:', address.SiteShortAddress);
+    } catch (error) {
+      console.error('Error saving selected address to preferences:', error);
+    }
+  };
+
+
   const validatePostcode = (postcode: string): boolean => {
     // Basic UK postcode validation
     const postcodeRegex = /^[A-Z]{1,2}[0-9][A-Z0-9]?\s?[0-9][A-Z]{2}$/i;
@@ -67,7 +99,7 @@ const BinCollection: React.FC<BinCollectionProps> = ({ isOpen, onClose }) => {
     return postcode.replace(/\s/g, '').toUpperCase();
   };
 
-  const searchAddresses = async () => {
+  const searchAddresses = useCallback(async () => {
     if (!postcode.trim()) {
       setError('Please enter a postcode');
       setShowToast(true);
@@ -88,7 +120,10 @@ const BinCollection: React.FC<BinCollectionProps> = ({ isOpen, onClose }) => {
       const formattedPostcode = formatPostcode(postcode);
       console.log('Searching for postcode:', formattedPostcode);
       
-      const response = await fetch(`http://localhost:3001/api/reading/rbc/getaddresses/${formattedPostcode}`);
+      // Save postcode to preferences when searching
+      await savePostcode(formattedPostcode);
+      
+      const response = await fetch(`http://116.203.83.250/api/reading/rbc/getaddresses/${formattedPostcode}`);
       console.log('Response status:', response.status);
       
       if (!response.ok) {
@@ -118,9 +153,38 @@ const BinCollection: React.FC<BinCollectionProps> = ({ isOpen, onClose }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [postcode]);
 
-  const fetchCollections = async (uprn: string) => {
+  // Debounced search function
+  const debouncedSearchAddresses = useCallback(() => {
+    const timeoutId = setTimeout(() => {
+      if (postcode.trim() && validatePostcode(postcode)) {
+        searchAddresses();
+      } else if (postcode.trim() && !validatePostcode(postcode)) {
+        // Clear addresses if postcode is invalid
+        setAddresses([]);
+        setSelectedAddress(null);
+        setCollections([]);
+      } else {
+        // Clear everything if postcode is empty
+        setAddresses([]);
+        setSelectedAddress(null);
+        setCollections([]);
+        setError('');
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [postcode, searchAddresses]);
+
+
+  // Auto-search when postcode changes
+  useEffect(() => {
+    const cleanup = debouncedSearchAddresses();
+    return cleanup;
+  }, [debouncedSearchAddresses]);
+
+  const fetchCollections = useCallback(async (uprn: string) => {
     setCollectionsLoading(true);
     setError('');
     
@@ -128,7 +192,7 @@ const BinCollection: React.FC<BinCollectionProps> = ({ isOpen, onClose }) => {
       console.log('Fetching collections for UPRN:', uprn);
       
       // Use NestJS API proxy server
-      const response = await fetch(`http://localhost:3001/api/reading/api/collections/${uprn}`);
+      const response = await fetch(`http://116.203.83.250/api/reading/api/collections/${uprn}`);
       console.log('Collections response status:', response.status);
       console.log('Collections response headers:', response.headers);
       
@@ -182,19 +246,55 @@ const BinCollection: React.FC<BinCollectionProps> = ({ isOpen, onClose }) => {
     } finally {
       setCollectionsLoading(false);
     }
-  };
+  }, []);
+
+  // Load saved preferences
+  const loadSavedData = useCallback(async () => {
+    try {
+      // Load saved postcode
+      const savedPostcode = await Preferences.get({ key: POSTCODE_KEY });
+      if (savedPostcode.value) {
+        setPostcode(savedPostcode.value);
+        console.log('Loaded saved postcode:', savedPostcode.value);
+      }
+
+      // Load saved address
+      const savedAddress = await Preferences.get({ key: SELECTED_ADDRESS_KEY });
+      if (savedAddress.value) {
+        const address = JSON.parse(savedAddress.value) as Address;
+        setSelectedAddress(address);
+        console.log('Loaded saved address:', address.SiteShortAddress);
+        
+        // Automatically fetch collections for the saved address
+        await fetchCollections(address.AccountSiteUprn);
+      }
+    } catch (error) {
+      console.error('Error loading saved data from preferences:', error);
+    }
+  }, [fetchCollections]);
+
+  // Load saved data when component mounts
+  useEffect(() => {
+    if (isOpen) {
+      loadSavedData();
+    }
+  }, [isOpen, loadSavedData]);
 
   const handleAddressSelect = async (address: Address) => {
     setSelectedAddress(address);
     console.log('Selected address:', address);
+    
+    // Save selected address to preferences
+    await saveSelectedAddress(address);
     
     // Fetch collection data for the selected address
     await fetchCollections(address.AccountSiteUprn);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
+    // Enter key now just blurs the input since search is automatic
     if (e.key === 'Enter') {
-      searchAddresses();
+      (e.target as HTMLInputElement).blur();
     }
   };
 
@@ -280,7 +380,7 @@ const BinCollection: React.FC<BinCollectionProps> = ({ isOpen, onClose }) => {
           {!selectedAddress ? (
             <div className="address-lookup-section">
               <h2>Find Your Address</h2>
-              <p>Enter your postcode to find your bin collection schedule:</p>
+              <p>Enter your postcode to automatically search for your bin collection schedule:</p>
               
               <IonItem>
                 <IonLabel position="stacked">Enter your postcode</IonLabel>
@@ -294,24 +394,12 @@ const BinCollection: React.FC<BinCollectionProps> = ({ isOpen, onClose }) => {
                 />
               </IonItem>
               
-              <IonButton
-                expand="block"
-                onClick={searchAddresses}
-                disabled={loading || !postcode.trim()}
-                className="search-button"
-              >
-                {loading ? (
-                  <>
-                    <IonSpinner name="crescent" />
-                    <span style={{ marginLeft: '8px' }}>Searching...</span>
-                  </>
-                ) : (
-                  <>
-                    <IonIcon icon={search} slot="start" />
-                    Search Addresses
-                  </>
-                )}
-              </IonButton>
+              {loading && (
+                <div className="loading-search" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '16px 0' }}>
+                  <IonSpinner name="crescent" />
+                  <span style={{ marginLeft: '8px' }}>Searching...</span>
+                </div>
+              )}
 
               {addresses.length > 0 && (
                 <div className="addresses-section">
