@@ -5,7 +5,7 @@ interface WelcomeHeaderProps {
   headerText?: string;
 }
 
-const WelcomeHeader: React.FC<WelcomeHeaderProps> = ({ headerText = 'Hello Reading!' }) => {
+const WelcomeHeader: React.FC<WelcomeHeaderProps> = ({ headerText }) => {
   return (
     <IonText>
       <h1>{headerText}</h1>

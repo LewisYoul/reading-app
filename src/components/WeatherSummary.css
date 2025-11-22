@@ -2,12 +2,12 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
-  margin: 8px 16px;
+  padding: 8px 12px;
   background: white;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 16px;
   color: var(--ion-color-dark);
+  background: var(--ion-color-light);
 }
 
 .weather-compact.weather-error {
@@ -35,6 +35,85 @@
   object-fit: contain;
 }
 
+/* Weather container for both current and forecast */
+.weather-container {
+  margin: 8px 16px;
+}
+
+/* Weather forecast section */
+.weather-forecast {
+  background: var(--ion-color-light);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.forecast-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+  margin-bottom: 12px;
+}
+
+.forecast-days {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.forecast-day {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ion-color-light-shade);
+}
+
+.forecast-day:last-child {
+  border-bottom: none;
+}
+
+.forecast-date {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ion-color-medium);
+  min-width: 70px;
+  flex-shrink: 0;
+}
+
+.forecast-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.forecast-temps {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  align-items: center;
+}
+
+.forecast-high {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--ion-color-dark);
+}
+
+.forecast-low {
+  font-size: 14px;
+  color: var(--ion-color-medium);
+}
+
+.forecast-rain {
+  font-size: 12px;
+  color: var(--ion-color-primary);
+  font-weight: 500;
+  min-width: 30px;
+  text-align: right;
+}
+
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   .weather-compact {
@@ -45,5 +124,21 @@
   .weather-compact.weather-error {
     background: var(--ion-color-danger-shade);
     color: var(--ion-color-danger-tint);
+  }
+
+  .weather-forecast {
+    background: #1a1a1a;
+  }
+
+  .forecast-title {
+    color: var(--ion-color-light);
+  }
+
+  .forecast-day {
+    border-bottom-color: #333;
+  }
+
+  .forecast-high {
+    color: var(--ion-color-light);
   }
 }

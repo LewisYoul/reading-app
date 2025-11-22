@@ -9,6 +9,13 @@ interface WeatherData {
     weather_code: number;
     wind_speed_10m: number;
   };
+  daily: {
+    time: string[];
+    weather_code: number[];
+    temperature_2m_max: number[];
+    temperature_2m_min: number[];
+    precipitation_probability_max: number[];
+  };
 }
 
 interface LocationData {
@@ -87,7 +94,7 @@ const WeatherSummary: React.FC = () => {
   const fetchWeather = async (lat: number, lon: number) => {
     try {
       const response = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=7`
       );
       
       if (!response.ok) {
@@ -110,6 +117,21 @@ const WeatherSummary: React.FC = () => {
       month: 'long' 
     };
     return today.toLocaleDateString('en-GB', options);
+  };
+
+  const formatForecastDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    } else if (date.toDateString() === tomorrow.toDateString()) {
+      return 'Tomorrow';
+    } else {
+      return date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' });
+    }
   };
 
   useEffect(() => {
@@ -145,19 +167,44 @@ const WeatherSummary: React.FC = () => {
     );
   }
 
-  const { current } = weather;
+  const { current, daily } = weather;
   const weatherIconUrl = getWeatherIconUrl(current.weather_code);
   const currentDate = getCurrentDate();
 
   return (
-    <div className="weather-compact">
-      <span className="weather-date">{currentDate}</span>
-      <img 
-        src={weatherIconUrl} 
-        alt="Weather icon" 
-        className="weather-icon-compact"
-      />
-      <span className="weather-temp">{Math.round(current.temperature_2m)}°</span>
+    <div className="weather-container">
+      <div className="weather-compact">
+        <span className="weather-date">{currentDate}</span>
+        <img 
+          src={weatherIconUrl} 
+          alt="Weather icon" 
+          className="weather-icon-compact"
+        />
+        <span className="weather-temp">{Math.round(current.temperature_2m)}°</span>
+      </div>
+      
+      <div className="weather-forecast">
+        <div className="forecast-title">7-Day Forecast</div>
+        <div className="forecast-days">
+          {daily.time.slice(0, 7).map((date, index) => (
+            <div key={date} className="forecast-day">
+              <div className="forecast-date">{formatForecastDate(date)}</div>
+              <img 
+                src={getWeatherIconUrl(daily.weather_code[index])} 
+                alt="Weather forecast icon" 
+                className="forecast-icon"
+              />
+              <div className="forecast-temps">
+                <span className="forecast-high">{Math.round(daily.temperature_2m_max[index])}°</span>
+                <span className="forecast-low">{Math.round(daily.temperature_2m_min[index])}°</span>
+              </div>
+              {daily.precipitation_probability_max[index] > 0 && (
+                <div className="forecast-rain">{daily.precipitation_probability_max[index]}%</div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

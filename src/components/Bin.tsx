@@ -325,7 +325,7 @@ export default function Bin() {
         <div className="bin-square set-address" onClick={handleSetAddress}>
           <div className="bin-icon">📍</div>
           <h1>Set Address</h1>
-          <h3>Tap to configure your location</h3>
+          <h3>Configure your location</h3>
         </div>
       )}
 
